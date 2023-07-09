@@ -32,7 +32,7 @@ async function serveHttp(conn: Deno.Conn) {
         },
       });
 
-      requestEvent
+      return requestEvent
         .respondWith(
           new Response(stream, {
             headers: {
@@ -49,6 +49,26 @@ async function serveHttp(conn: Deno.Conn) {
             }
           }
         });
+    }
+
+    if (requestEvent.request.url.includes("/ws")) {
+      if (requestEvent.request.headers.get("upgrade") != "websocket") {
+        return requestEvent
+          .respondWith(new Response("hello", { status: 501 }))
+          .catch((e) => console.log("no ws: ", e));
+      }
+
+      const { socket, response } = Deno.upgradeWebSocket(requestEvent.request);
+      socket.addEventListener("open", () => {
+        console.log("a client connected!");
+      });
+      socket.addEventListener("message", (event) => {
+        if (event.data === "ping") {
+          socket.send("pong");
+        }
+      });
+
+      return requestEvent.respondWith(response);
     }
   }
 }
