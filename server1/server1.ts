@@ -63,9 +63,11 @@ async function serveHttp(conn: Deno.Conn) {
         console.log("a client connected!");
       });
       socket.addEventListener("message", (event) => {
-        if (event.data === "ping") {
-          socket.send("pong");
-        }
+        const aResponse = JSON.parse(event.data);
+
+        socket.send(
+          `<li id="chat_room" hx-swap-oob="beforeend"> ${aResponse.chat_message} </li>`
+        );
       });
 
       return requestEvent.respondWith(response);
